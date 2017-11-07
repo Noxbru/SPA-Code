@@ -1,14 +1,21 @@
-CC=gcc
-EXECUTABLE=spa.out
+CC = gcc
+EXECUTABLE = spa
 
-CFLAGS=-Wall -O3
-LDFLAGS=-lm
+CFLAGS = -Wall -Wextra
+OPTIMIZATION_FLAGS = -O2 -march=native
+LDFLAGS = -lm
 
-CPPLIST=ranvec.c
+CFLAGS+=$(OPTIMIZATION_FLAGS)
 
-all:
-	$(CC) $(CFLAGS) Program.c $(CPPLIST) -o $(EXECUTABLE) $(LDFLAGS) 
+SOURCES = Program.c ranvec.c
+BIN = spa
+
+
+all: spa
+
+spa: $(SOURCES)
+	$(CC) $(CFLAGS) $(SOURCES) -o $(BIN) $(LDFLAGS) 
 
 clean: 
-	@rm -f *.o *.out
+	@rm -f spa
 
