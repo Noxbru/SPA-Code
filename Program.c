@@ -414,65 +414,67 @@ void createInitialConfiguration(int choices[rows][cols], int projNum[cols], int 
 /* read in the data for which pairs have what projects as their choices */
 void readChoices(int choices[rows][cols])
 {
-    FILE *data;
-    int x, y = 0, z = 0; /* x is our character as an integer, y is the row of the choices array, and z the column. */
-    char c = 'A', d = ','; /* c is the character currently being read. d is the last character read. Start with a comma. */
-    data = fopen(fileName1, "r");
+    int c;
+    FILE *fin;
+    fin = fopen(fileName1, "r");
 
-    /* read through file char by char */
+    unsigned int row = 0;
+    unsigned int column = 0;
+
+    // Jump over "A,"
+    fgetc(fin);
+    fgetc(fin);
+
+    // Get the first character
+    c = fgetc(fin);
+
     while(c != EOF)
     {
-        c =  fgetc(data);
-        x = c - '0'; /* turn to int */
+        if(c == '\r')
+            c = fgetc(fin);
 
-        switch(c)
+        if(c == '\n')
         {
-        /* if two commas in a row, then a zero...
-         * Can't think of a case where this isn't true,
-         * unless the data was weirdly spaced or something. */
-        case ',':
-            /* last choice was a comma then we have had an "empty space"
-             * in our data table - so a zero */
-            if(d == ',')
-            {
-                choices[y][z] = 0;
-                z++;
-            }
-            break;
+            row++;
+            column = 0;
 
-        /* new line - so reset column, move on to new row, make d a comma again */
-        case '\n':
-            y++;
-            z = 0;
-            c = ','; /* because c becomes d after the switch, and this helps tell if there is a zero at the start of a new line. */
-            break;
-
-        /* this happens at end of lines, before new lines */
-        case '\r':
-            /* if comma last thing before end of line, zero again. */
-            if(d == ',')
-            {
-                choices[y][z] = 0;
-            }
-            break;
-
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-            choices[y][z] = x;
-            z++;
-            break;
-
-        case EOF:
-        default:
-            break;
+            // Jump over "A,"
+            fgetc(fin);
+            fgetc(fin);
         }
 
-        d = c; /* update last char. */
+        if(c == ',')
+        {
+            choices[row][column] = 0;
+            column++;
+
+            // If the next character is a newline (or carriage return)
+            // we have to set the last column to a 0 because we can't
+            // detect it otherwise
+            c = fgetc(fin);
+            if(c == '\r' || c == '\n')
+                choices[row][column] = 0;
+            continue;
+        }
+
+        if(c != ',' && c != '\n' && c != '\r')
+        {
+            ungetc(c, fin);
+            fscanf(fin, "%i", &choices[row][column]);
+            column++;
+
+            // If the next character after the number is a comma we have
+            // to consume it to avoid counting it as if it were an
+            // empty column
+            c = fgetc(fin);
+            if(c != ',')
+                ungetc(c, fin);
+        }
+
+        c = fgetc(fin);
     }
 
-    fclose(data);
+    fclose(fin);
 }
 
 /* reads in the lecturer constraint into supConstraint */
