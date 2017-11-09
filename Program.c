@@ -270,42 +270,36 @@ int randomNum(float random, int divisor)
     return number;
 }
 
-/* This functions CHANGES THE ALLOCATION. Based on picking a pair, and then picking a project, and then making the change. Stores the change nicely in the changes function.*/
+/* This functions CHANGES THE ALLOCATION. Based on picking a pair, and then picking a project,
+ * and then making the change. Stores the change nicely in the changes function.*/
 void changeAllocationByPref(int choices[rows][cols], int projNum[cols], int projPref[cols], int changes[])
 {
     int pair, pref;
-    int j;
-    int go = 0; /* while looper */
+    int i;
 
     vector_random_generator(1, rands);
     pair = randomNum(rands[0], cols);
     //printf("\npair current pref is %d\n", projPref[pair]);
 
-    /* avoid picking same preference - waste of a move and time. */
-    while(go == 0)
+    /* Avoid picking same preference - waste of a move and time. */
+    do
     {
         vector_random_generator(1, rands);
-        pref = randomNum(rands[0], 4);
-        //printf("chosen pref is %d\n", pref+1);
-
-        /* then project will try and change. pref+1 as pref in [0,3] need [1,4] */
-        if(projPref[pair] != pref + 1)
-        {
-            go = 1;
-        }
+        pref = randomNum(rands[0], 4) + 1;
     }
+    while(projPref[pair] == pref);
 
     changes[0] = pair;
     changes[1] = projNum[pair];
     changes[2] = projPref[pair]; /* = choices[changes[1]][changes[0]] = choices[projNum[pair]][pair]*/
     //printf("Energy before reallocation is %d\n", energy(projPref));
     /* make the change */
-    for(j = 0; j < rows; j++)
+    for(i = 0; i < rows; i++)
     {
-        if(choices[j][pair] == pref + 1)
+        if(choices[i][pair] == pref)
         {
-            projNum[pair] = j;
-            projPref[pair] = pref+1;
+            projNum[pair] = i;
+            projPref[pair] = pref;
         }
     }
     //printf("Energy after reallocation is %d\n", energy(projPref));
