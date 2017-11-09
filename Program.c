@@ -300,6 +300,8 @@ void changeAllocationByPref(int choices[rows][cols], int projNum[cols], int proj
         {
             projNum[pair] = i;
             projPref[pair] = pref;
+
+            /*return;*/
         }
     }
     //printf("Energy after reallocation is %d\n", energy(projPref));
