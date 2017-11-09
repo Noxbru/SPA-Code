@@ -97,292 +97,270 @@
 static int *rand_w_array1 = NULL;
 static int *rand_w_array2 = NULL;
 
-void init_vector_random_generator(int iseed,int nrand)
+void init_vector_random_generator(int iseed, int nrand)
 {
-  extern int *rand_w_array1;
-  extern int *rand_w_array2;
-  double rmod;
-  int i, ihlp, imask1, imask2;
-  int icyc, ncyc, nrest, ibas1, ibas2, ibas3;
+    extern int *rand_w_array1;
+    extern int *rand_w_array2;
+    double rmod;
+    int i, ihlp, imask1, imask2;
+    int icyc, ncyc, nrest, ibas1, ibas2, ibas3;
 
-  if(iseed <=0 || iseed >= BIGINTEGER)
+    if(iseed <= 0 || iseed >= BIGINTEGER)
     {
-      printf("Message from random number initialization:\n");
-      printf("Please specify a seed smaller than %d\n",BIGINTEGER);
-      exit(0);
+        printf("Message from random number initialization:\n");
+        printf("Please specify a seed smaller than %d\n", BIGINTEGER);
+        exit(0);
     }
-  if(nrand <=0)
+    if(nrand <= 0)
     {
-      printf("Message from random number initialization:\n");
-      printf("Please specify a positive number of random numbers\n");
-      exit(0);
-    }
-
-  rmod = (double) (iseed);
-
-/* Warm up the congruential generator */
-
-  for(i = 0; i < NWARM; ++i)
-    {
-      rmod = MULTIPLY * rmod;
-      rmod = rmod - ( (double) ( (int) (rmod * FACTOR) ) ) * BIGFLOAT;
-      ihlp = (int) (rmod + 0.1);      /* This is done to get rid of */
-      rmod = (double) (ihlp);         /* possible roundoff errors   */
+        printf("Message from random number initialization:\n");
+        printf("Please specify a positive number of random numbers\n");
+        exit(0);
     }
 
-/* Allocate memory for the working arrays */
+    rmod = (double) iseed;
 
-  rand_w_array1 = (int *) calloc(BIGMAGIC1 + nrand,sizeof(int));
-  rand_w_array2 = (int *) calloc(BIGMAGIC2 + nrand,sizeof(int));
+    /* Warm up the congruential generator */
 
-/* Put congruential random numbers onto the working arrays */
-
-  for(i = 0; i < BIGMAGIC1; ++i)
+    for(i = 0; i < NWARM; ++i)
     {
-      rmod = MULTIPLY * rmod;
-      rmod = rmod - ( (double) ( (int) (rmod * FACTOR) ) ) * BIGFLOAT;
-      ihlp = (int) (rmod + 0.1);
-      rmod = (double) (ihlp);
-      rand_w_array1[i] = ihlp;
+        rmod = MULTIPLY * rmod;
+        rmod = rmod - ((double) ((int) (rmod * FACTOR))) * BIGFLOAT;
+        ihlp = (int) (rmod + 0.1);      /* This is done to get rid of */
+        rmod = (double) (ihlp);         /* possible roundoff errors   */
     }
 
-  for(i = 0; i < BIGMAGIC2; ++i)
+    /* Allocate memory for the working arrays */
+
+    rand_w_array1 = calloc(BIGMAGIC1 + nrand, sizeof(int));
+    rand_w_array2 = calloc(BIGMAGIC2 + nrand, sizeof(int));
+
+    /* Put congruential random numbers onto the working arrays */
+
+    for(i = 0; i < BIGMAGIC1; ++i)
     {
-      rmod = MULTIPLY * rmod;
-      rmod = rmod - ( (double) ( (int) (rmod * FACTOR) ) ) * BIGFLOAT;
-      ihlp = (int) (rmod + 0.1);
-      rmod = (double) (ihlp);
-      rand_w_array2[i] = ihlp;
+        rmod = MULTIPLY * rmod;
+        rmod = rmod - ((double) ((int) (rmod * FACTOR))) * BIGFLOAT;
+        ihlp = (int) (rmod + 0.1);
+        rmod = (double) (ihlp);
+        rand_w_array1[i] = ihlp;
     }
 
-/* Linear independence of the bit columns for both generators. */
-/* Put ones on the main diagonal, and zeroes above.            */
-/* & is the bitwise AND                                        */
-/* | is the bitwise OR                                         */
-/* ^ is the bitwise XOR                                        */
-
-  imask1 = 1;
-  imask2 = BIGINTEGER;
-  for(i = NBIT - 2; i > 0; --i)
+    for(i = 0; i < BIGMAGIC2; ++i)
     {
-      rand_w_array1[i] = ( rand_w_array1[i] | imask1 ) & imask2;
-      rand_w_array2[i] = ( rand_w_array2[i] | imask1 ) & imask2;
-      imask2 = imask2 ^ imask1;
-      imask1 = imask1 * 2;
-    }
-  rand_w_array1[0] = imask1;    /* This last element is treated separately */
-  rand_w_array2[0] = imask1;    /* in order to avoid overflow in imask1    */
-
-/* Warm up. Same structure as in vector_random_generator.      */
-/* Double loop structure to enable vectorization of inner loop */
-
-/* First, generator one */
-
-  ncyc  = nrand / SMALLMAGIC1;
-  nrest = nrand - SMALLMAGIC1 * ncyc;
-
-  ibas3 = BIGMAGIC1;                 /* position of first new random number */
-  ibas2 = BIGMAGIC1 - SMALLMAGIC1;   /* position of first input for this    */
-  ibas1 = 0;                         /* position of second input for this   */
-
-  for(icyc = 0; icyc < ncyc; ++icyc)
-    {
-#pragma ivdep
-      for(i = 0; i < SMALLMAGIC1; ++i)
-	{
-	  rand_w_array1[ibas3 + i] = rand_w_array1[ibas1 + i] 
-                                   ^ rand_w_array1[ibas2 + i];
-	}
-      ibas1 = ibas1 + SMALLMAGIC1;
-      ibas2 = ibas2 + SMALLMAGIC1;
-      ibas3 = ibas3 + SMALLMAGIC1;
+        rmod = MULTIPLY * rmod;
+        rmod = rmod - ((double) ((int) (rmod * FACTOR))) * BIGFLOAT;
+        ihlp = (int) (rmod + 0.1);
+        rmod = (double) (ihlp);
+        rand_w_array2[i] = ihlp;
     }
 
-  if(nrest > 0)
+    /* Linear independence of the bit columns for both generators. */
+    /* Put ones on the main diagonal, and zeroes above.            */
+    /* & is the bitwise AND                                        */
+    /* | is the bitwise OR                                         */
+    /* ^ is the bitwise XOR                                        */
+
+    imask1 = 1;
+    imask2 = BIGINTEGER;
+    for(i = NBIT - 2; i > 0; i--)
+    {
+        rand_w_array1[i] = (rand_w_array1[i] | imask1) & imask2;
+        rand_w_array2[i] = (rand_w_array2[i] | imask1) & imask2;
+        imask2 = imask2 ^ imask1;
+        imask1 = imask1 * 2;
+    }
+    rand_w_array1[0] = imask1;    /* This last element is treated separately */
+    rand_w_array2[0] = imask1;    /* in order to avoid overflow in imask1    */
+
+    /* Warm up. Same structure as in vector_random_generator.      */
+    /* Double loop structure to enable vectorization of inner loop */
+
+    /* First, generator one */
+
+    ncyc  = nrand / SMALLMAGIC1;
+    nrest = nrand - SMALLMAGIC1 * ncyc;
+
+    ibas3 = BIGMAGIC1;                 /* position of first new random number */
+    ibas2 = BIGMAGIC1 - SMALLMAGIC1;   /* position of first input for this    */
+    ibas1 = 0;                         /* position of second input for this   */
+
+    for(icyc = 0; icyc < ncyc; icyc++)
     {
 #pragma ivdep
-      for(i = 0; i < nrest; ++i)
-	{
-	  rand_w_array1[ibas3 + i] = rand_w_array1[ibas1 + i] 
-                                   ^ rand_w_array1[ibas2 + i];
-	}
+        for(i = 0; i < SMALLMAGIC1; i++)
+        {
+            rand_w_array1[ibas3 + i] =
+                rand_w_array1[ibas1 + i] ^ rand_w_array1[ibas2 + i];
+        }
+
+        ibas1 = ibas1 + SMALLMAGIC1;
+        ibas2 = ibas2 + SMALLMAGIC1;
+        ibas3 = ibas3 + SMALLMAGIC1;
     }
 
-/* Put last elements to the beginning */
-
-#pragma ivdep
-  for(i = 0; i < BIGMAGIC1; ++i)
-    {
-      rand_w_array1[i] = rand_w_array1[nrand + i];
-    }
-
-/* Now the same for the second generator */
-
-  ncyc  = nrand / SMALLMAGIC2;
-  nrest = nrand - SMALLMAGIC2 * ncyc;
-
-  ibas3 = BIGMAGIC2;                 /* position of first new random number */
-  ibas2 = BIGMAGIC2 - SMALLMAGIC2;   /* position of first input for this    */
-  ibas1 = 0;                         /* position of second input for this   */
-
-  for(icyc = 0; icyc < ncyc; ++icyc)
+    if(nrest > 0)
     {
 #pragma ivdep
-      for(i = 0; i < SMALLMAGIC2; ++i)
-	{
-	  rand_w_array2[ibas3 + i] = rand_w_array2[ibas1 + i] 
-                                   ^ rand_w_array2[ibas2 + i];
-	}
-      ibas1 = ibas1 + SMALLMAGIC2;
-      ibas2 = ibas2 + SMALLMAGIC2;
-      ibas3 = ibas3 + SMALLMAGIC2;
+        for(i = 0; i < nrest; i++)
+        {
+            rand_w_array1[ibas3 + i] =
+                rand_w_array1[ibas1 + i] ^ rand_w_array1[ibas2 + i];
+        }
     }
 
-  if(nrest > 0)
-    {
-#pragma ivdep
-      for(i = 0; i < nrest; ++i)
-	{
-	  rand_w_array2[ibas3 + i] = rand_w_array2[ibas1 + i] 
-                                   ^ rand_w_array2[ibas2 + i];
-	}
-    }
-
-/* Put last elements to the beginning */
+    /* Put last elements to the beginning */
 
 #pragma ivdep
-  for(i = 0; i < BIGMAGIC2; ++i)
+    for(i = 0; i < BIGMAGIC1; i++)
     {
-      rand_w_array2[i] = rand_w_array2[nrand + i];
+        rand_w_array1[i] = rand_w_array1[nrand + i];
     }
 
-/* Initialization complete */
+    /* Now the same for the second generator */
 
-  return;
+    ncyc  = nrand / SMALLMAGIC2;
+    nrest = nrand - SMALLMAGIC2 * ncyc;
+
+    ibas3 = BIGMAGIC2;                 /* position of first new random number */
+    ibas2 = BIGMAGIC2 - SMALLMAGIC2;   /* position of first input for this    */
+    ibas1 = 0;                         /* position of second input for this   */
+
+    for(icyc = 0; icyc < ncyc; icyc++)
+    {
+#pragma ivdep
+        for(i = 0; i < SMALLMAGIC2; i++)
+        {
+            rand_w_array2[ibas3 + i] =
+                rand_w_array2[ibas1 + i] ^ rand_w_array2[ibas2 + i];
+        }
+
+        ibas1 = ibas1 + SMALLMAGIC2;
+        ibas2 = ibas2 + SMALLMAGIC2;
+        ibas3 = ibas3 + SMALLMAGIC2;
+    }
+
+    if(nrest > 0)
+    {
+#pragma ivdep
+        for(i = 0; i < nrest; i++)
+        {
+            rand_w_array2[ibas3 + i] =
+                rand_w_array2[ibas1 + i] ^ rand_w_array2[ibas2 + i];
+        }
+    }
+
+    /* Put last elements to the beginning */
+
+#pragma ivdep
+    for(i = 0; i < BIGMAGIC2; i++)
+    {
+        rand_w_array2[i] = rand_w_array2[nrand + i];
+    }
+
+    /* Initialization complete */
+
+    return;
 }
 
 void vector_random_generator(int nrand, double *random_numbers)
 {
-  extern int *rand_w_array1;
-  extern int *rand_w_array2;
-  int i, icyc, ncyc, nrest, ibas1, ibas2, ibas3;
+    extern int *rand_w_array1;
+    extern int *rand_w_array2;
+    int i, icyc, ncyc, nrest, ibas1, ibas2, ibas3;
 
-/* First, run generator one */
+    /* First, run generator one */
 
-  ncyc  = nrand / SMALLMAGIC1;
-  nrest = nrand - SMALLMAGIC1 * ncyc;
+    ncyc  = nrand / SMALLMAGIC1;
+    nrest = nrand - SMALLMAGIC1 * ncyc;
 
-  ibas3 = BIGMAGIC1;                 /* position of first new random number */
-  ibas2 = BIGMAGIC1 - SMALLMAGIC1;   /* position of first input for this    */
-  ibas1 = 0;                         /* position of second input for this   */
+    ibas3 = BIGMAGIC1;                 /* position of first new random number */
+    ibas2 = BIGMAGIC1 - SMALLMAGIC1;   /* position of first input for this    */
+    ibas1 = 0;                         /* position of second input for this   */
 
-  for(icyc = 0; icyc < ncyc; ++icyc)
+    for(icyc = 0; icyc < ncyc; icyc++)
     {
 #pragma ivdep
-      for(i = 0; i < SMALLMAGIC1; ++i)
-	{
-	  rand_w_array1[ibas3 + i] = rand_w_array1[ibas1 + i] 
-                                   ^ rand_w_array1[ibas2 + i];
-	}
-      ibas1 = ibas1 + SMALLMAGIC1;
-      ibas2 = ibas2 + SMALLMAGIC1;
-      ibas3 = ibas3 + SMALLMAGIC1;
+        for(i = 0; i < SMALLMAGIC1; i++)
+        {
+            rand_w_array1[ibas3 + i] =
+                rand_w_array1[ibas1 + i] ^ rand_w_array1[ibas2 + i];
+        }
+
+        ibas1 = ibas1 + SMALLMAGIC1;
+        ibas2 = ibas2 + SMALLMAGIC1;
+        ibas3 = ibas3 + SMALLMAGIC1;
     }
 
-  if(nrest > 0)
+    if(nrest > 0)
     {
 #pragma ivdep
-      for(i = 0; i < nrest; ++i)
-	{
-	  rand_w_array1[ibas3 + i] = rand_w_array1[ibas1 + i] 
-                                   ^ rand_w_array1[ibas2 + i];
-	}
+        for(i = 0; i < nrest; i++)
+        {
+            rand_w_array1[ibas3 + i] =
+                rand_w_array1[ibas1 + i] ^ rand_w_array1[ibas2 + i];
+        }
     }
 
-/* Put last elements to the beginning */
+    /* Put last elements to the beginning */
 
 #pragma ivdep
-  for(i = 0; i < BIGMAGIC1; ++i)
+    for(i = 0; i < BIGMAGIC1; i++)
     {
-      rand_w_array1[i] = rand_w_array1[nrand + i];
+        rand_w_array1[i] = rand_w_array1[nrand + i];
     }
 
-/* Now the same for the second generator */
+    /* Now the same for the second generator */
 
-  ncyc  = nrand / SMALLMAGIC2;
-  nrest = nrand - SMALLMAGIC2 * ncyc;
+    ncyc  = nrand / SMALLMAGIC2;
+    nrest = nrand - SMALLMAGIC2 * ncyc;
 
-  ibas3 = BIGMAGIC2;                 /* position of first new random number */
-  ibas2 = BIGMAGIC2 - SMALLMAGIC2;   /* position of first input for this    */
-  ibas1 = 0;                         /* position of second input for this   */
+    ibas3 = BIGMAGIC2;                 /* position of first new random number */
+    ibas2 = BIGMAGIC2 - SMALLMAGIC2;   /* position of first input for this    */
+    ibas1 = 0;                         /* position of second input for this   */
 
-  for(icyc = 0; icyc < ncyc; ++icyc)
-    {
-#pragma ivdep
-      for(i = 0; i < SMALLMAGIC2; ++i)
-	{
-	  rand_w_array2[ibas3 + i] = rand_w_array2[ibas1 + i] 
-                                   ^ rand_w_array2[ibas2 + i];
-	}
-      ibas1 = ibas1 + SMALLMAGIC2;
-      ibas2 = ibas2 + SMALLMAGIC2;
-      ibas3 = ibas3 + SMALLMAGIC2;
-    }
-
-  if(nrest > 0)
+    for(icyc = 0; icyc < ncyc; icyc++)
     {
 #pragma ivdep
-      for(i = 0; i < nrest; ++i)
-	{
-	  rand_w_array2[ibas3 + i] = rand_w_array2[ibas1 + i] 
-                                   ^ rand_w_array2[ibas2 + i];
-	}
+        for(i = 0; i < SMALLMAGIC2; i++)
+        {
+            rand_w_array2[ibas3 + i] =
+                rand_w_array2[ibas1 + i] ^ rand_w_array2[ibas2 + i];
+        }
+
+        ibas1 = ibas1 + SMALLMAGIC2;
+        ibas2 = ibas2 + SMALLMAGIC2;
+        ibas3 = ibas3 + SMALLMAGIC2;
     }
 
-/* Put last elements to the beginning */
+    if(nrest > 0)
+    {
+#pragma ivdep
+        for(i = 0; i < nrest; i++)
+        {
+            rand_w_array2[ibas3 + i] =
+                rand_w_array2[ibas1 + i] ^ rand_w_array2[ibas2 + i];
+        }
+    }
+
+    /* Put last elements to the beginning */
 
 #pragma ivdep
-  for(i = 0; i < BIGMAGIC2; ++i)
+    for(i = 0; i < BIGMAGIC2; i++)
     {
-      rand_w_array2[i] = rand_w_array2[nrand + i];
+        rand_w_array2[i] = rand_w_array2[nrand + i];
     }
 
-/* Generate normalized random numbers:                        */
-/* Take output from generator one and combine it with         */
-/* that from generator two, via a simple XOR                  */
+    /* Generate normalized random numbers:                        */
+    /* Take output from generator one and combine it with         */
+    /* that from generator two, via a simple XOR                  */
 
 #pragma ivdep
-  for(i = 0; i < nrand; ++i)
+    for(i = 0; i < nrand; i++)
     {
-      random_numbers[i] = FACTOR *
-	(rand_w_array1[i + BIGMAGIC1] ^ rand_w_array2[i + BIGMAGIC2]);
+        random_numbers[i] = FACTOR *
+            (rand_w_array1[i + BIGMAGIC1] ^ rand_w_array2[i + BIGMAGIC2]);
     }
 
-  return;
-}
-
-void write_random_generator(void)
-{
-  extern int *rand_w_array1;
-  extern int *rand_w_array2;
-  FILE *fp;
-
-  fp = fopen(WORKFILE,"w");
-  fwrite(rand_w_array1,sizeof(int),BIGMAGIC1,fp);
-  fwrite(rand_w_array2,sizeof(int),BIGMAGIC2,fp);
-  fclose(fp);
-  return;
-}
-
-void read_random_generator(void)
-{
-  extern int *rand_w_array1;
-  extern int *rand_w_array2;
-  FILE *fp;
-
-  fp = fopen(WORKFILE,"r");
-  fread(rand_w_array1,sizeof(int),BIGMAGIC1,fp);
-  fread(rand_w_array2,sizeof(int),BIGMAGIC2,fp);
-  fclose(fp);
-  return;
+    return;
 }
