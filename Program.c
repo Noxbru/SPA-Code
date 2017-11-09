@@ -129,7 +129,6 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
 {
     int successfulmoves = 0;
     int moves = 0;
-    int same = 0;
     float trialEnergy, currentEnergy;
     float changeEnergy;
     /*float ratioEnergy;*/
@@ -143,7 +142,6 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
     while(moves < (1000 * cols) && successfulmoves < (100 * cols))
     {
         moves++;
-        successfulmoves++;
         /* change the allocation here */
         changeAllocationByPref(choices, projNum, projPref, changes);
 
@@ -153,10 +151,7 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
         changeEnergy = trialEnergy - currentEnergy;
         /*ratioEnergy = fabs(trialEnergy / currentEnergy);*/
 
-        vector_random_generator(1, rands);
-
         /* projNum[changes[0]] != changes[1] at this point. The former is current proj, the latter old proj */
-        lecClashes = countSupConstraintClashes(supConstraint, projNum, projNum[changes[0]]);
 
         /* Reject configuration due to clash - revert changes and reduce succesful move counter */
         if(projClashFullCount(projNum) > 0)
@@ -164,32 +159,36 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
             projNum[changes[0]] = changes[1];
             projPref[changes[0]] = changes[2];
 
-            successfulmoves--;
+            continue;
             //  printf("ttttttttttttttthere was a clash\n");
         }
+
+        vector_random_generator(1, rands);
         /* Reject configuration due to energy - revert changes */
-        else if(temp > 0 && rands[0] > exp(-changeEnergy / temp))
+        if(temp > 0 && rands[0] > exp(-changeEnergy / temp))
         {
             projNum[changes[0]] = changes[1];
             projPref[changes[0]] = changes[2];
-            successfulmoves--;
             //printf("reject due to energy\n");
+            continue;
         }
         /* Reject due to energy in T=0 case */
         else if(temp == 0 && trialEnergy > currentEnergy)
         {
             projNum[changes[0]] = changes[1];
             projPref[changes[0]] = changes[2];
-            successfulmoves--;
             //printf("reject due to energy\n");
+            continue;
         }
         /* reject due to lecturer constraint violation */
-        else if(lecClashes > 0)
+
+        lecClashes = countSupConstraintClashes(supConstraint, projNum, projNum[changes[0]]);
+        if(lecClashes > 0)
         {
             projNum[changes[0]] = changes[1];
             projPref[changes[0]] = changes[2];
-            successfulmoves--;
             //printf("reject due to lecturers\n");
+            continue;
         }
 
         /* This is (in theory) impossible. We count because as its a nice
@@ -197,11 +196,11 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
         if(currentEnergy == trialEnergy)
         {
             //printf("This shouldn't be happening?\n\n");
-            same++;
-            successfulmoves--;
+            continue;
         }
 
-        currentEnergy = energy(projPref);
+        successfulmoves++;
+        currentEnergy = trialEnergy;
         //fprintf(saveData, "%d ", currentEnergy);
         //fprintf(saveData, "\n");
     }
