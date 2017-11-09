@@ -421,10 +421,6 @@ void readChoices(int choices[rows][cols])
     unsigned int row = 0;
     unsigned int column = 0;
 
-    // Jump over "A,"
-    fgetc(fin);
-    fgetc(fin);
-
     // Get the first character
     c = fgetc(fin);
 
@@ -437,10 +433,6 @@ void readChoices(int choices[rows][cols])
         {
             row++;
             column = 0;
-
-            // Jump over "A,"
-            fgetc(fin);
-            fgetc(fin);
         }
 
         if(c == ',')
