@@ -163,6 +163,15 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
             //  printf("ttttttttttttttthere was a clash\n");
         }
 
+        lecClashes = countSupConstraintClashes(supConstraint, projNum, projNum[changes[0]]);
+        if(lecClashes > 0)
+        {
+            projNum[changes[0]] = changes[1];
+            projPref[changes[0]] = changes[2];
+            //printf("reject due to lecturers\n");
+            continue;
+        }
+
         vector_random_generator(1, rands);
         /* Reject configuration due to energy - revert changes */
         if(temp > 0 && rands[0] > exp(-changeEnergy / temp))
@@ -181,15 +190,6 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
             continue;
         }
         /* reject due to lecturer constraint violation */
-
-        lecClashes = countSupConstraintClashes(supConstraint, projNum, projNum[changes[0]]);
-        if(lecClashes > 0)
-        {
-            projNum[changes[0]] = changes[1];
-            projPref[changes[0]] = changes[2];
-            //printf("reject due to lecturers\n");
-            continue;
-        }
 
         /* This is (in theory) impossible. We count because as its a nice
          * tracker for if things are broken. */
