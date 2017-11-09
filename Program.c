@@ -480,82 +480,57 @@ void readChoices(int choices[rows][cols])
 /* reads in the lecturer constraint into supConstraint */
 void readLecturers(float supConstraint[rows][numLec])
 {
-    FILE *data;
-    int y = 0, z = 0, i = 1; /* y is the ROW (project), z is the COLUMN (suprevisor). i keeps track of decimal places in the numbers being read in. */
-    char c = 'A', d = ','; /* c is char being read in. d the previous char */
-    float tempVar = 0, x; /* x is the float version of the charcter being read in c. tempVar is a temporary sum */
-    data = fopen(fileName2, "r");
+    char c;
+    FILE *fin;
+    fin = fopen(fileName2, "r");
+
+    unsigned int row = 0;
+    unsigned int column = 0;
+
+    // Get the first character
+    c = fgetc(fin);
 
     while(c != EOF)
     {
-        c =  fgetc(data);
-        x = (float) c - '0';
+        if(c == '\r')
+            c = fgetc(fin);
 
-        switch(c)
+        if(c == '\n')
         {
-        case ',':
-            /* empty cell. add zero */
-            if (d == ',')
-            {
-                supConstraint[y][z] = 0;
-                z++;
-            }
-            /* if we have a non-empty value, we add it to the array */
-            else if(tempVar > 0)
-            {
-                supConstraint[y][z] = tempVar;
-                z++;
-                i = 1;
-                tempVar = 0;
-            }
-            break;
-
-        /* reset column, new row */
-        case '\n':
-            y++;
-            z = 0;
-            c = ',';
-            break;
-
-        /* this happens at end of lines, before new lines */
-        case '\r':
-            /* if comma last thing before end of line, zero again. */
-            if(d == ',')
-            {
-                supConstraint[y][z] = 0;
-            }
-            else if(tempVar > 0)
-            {
-                supConstraint[y][z] = tempVar;
-                z++;
-                i = 1;
-                tempVar = 0;
-            }
-            break;
-
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-        case '0':
-            /* this is messy to deal with decimals */
-            tempVar += x/i;
-            i = i * 10;
-            break;
-
-        case EOF:
-        case '.':
-        default:
-            break;
+            row++;
+            column = 0;
         }
 
-        d = c; /* update last char. */
+        if(c == ',')
+        {
+            supConstraint[row][column] = 0;
+            column++;
+
+            // If the next character is a newline (or carriage return)
+            // we have to set the last column to a 0 because we can't
+            // detect it otherwise
+            c = fgetc(fin);
+            if(c == '\r' || c == '\n')
+                supConstraint[row][column] = 0;
+            continue;
+        }
+
+        if(c != ',' && c != '\n' && c != '\r')
+        {
+            ungetc(c, fin);
+            fscanf(fin, "%f", &supConstraint[row][column]);
+            column++;
+
+            // If the next character after the number is a comma we have
+            // to consume it to avoid counting it as if it were an
+            // empty column
+            c = fgetc(fin);
+            if(c != ',')
+                ungetc(c, fin);
+        }
+
+        c = fgetc(fin);
     }
 
-    fclose(data);
+    fclose(fin);
 }
