@@ -236,15 +236,10 @@ int projClashFullCount(int projNum[])
 
     for(i = 0; i < cols; i++)
     {
-        for(j = i; j < cols; j++)
+        for(j = i + 1; j < cols; j++)
         {
-            if(i != j)
-            {
-                if(projNum[i] == projNum[j])
-                {
-                    count++;
-                }
-            }
+            if(projNum[i] == projNum[j])
+                count++;
         }
     }
 
