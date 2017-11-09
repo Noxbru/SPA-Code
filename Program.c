@@ -151,45 +151,30 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
         changeEnergy = trialEnergy - currentEnergy;
         /*ratioEnergy = fabs(trialEnergy / currentEnergy);*/
 
-        /* projNum[changes[0]] != changes[1] at this point. The former is current proj, the latter old proj */
+        /* projNum[changes[0]] != changes[1] at this point.
+         * The former is current proj, the latter old proj */
 
-        /* Reject configuration due to clash - revert changes and reduce succesful move counter */
+        /* Reject configuration due to clash */
         if(projClashFullCount(projNum) > 0)
-        {
-            projNum[changes[0]] = changes[1];
-            projPref[changes[0]] = changes[2];
+            goto reject;
 
-            continue;
-            //  printf("ttttttttttttttthere was a clash\n");
-        }
-
+        /* reject due to lecturer constraint violation */
         lecClashes = countSupConstraintClashes(supConstraint, projNum, projNum[changes[0]]);
         if(lecClashes > 0)
-        {
-            projNum[changes[0]] = changes[1];
-            projPref[changes[0]] = changes[2];
-            //printf("reject due to lecturers\n");
-            continue;
-        }
+            goto reject;
+
+        /*
+         *if(changeEnergy < 0)
+         *    goto accept;
+         */
 
         vector_random_generator(1, rands);
         /* Reject configuration due to energy - revert changes */
         if(temp > 0 && rands[0] > exp(-changeEnergy / temp))
-        {
-            projNum[changes[0]] = changes[1];
-            projPref[changes[0]] = changes[2];
-            //printf("reject due to energy\n");
-            continue;
-        }
+            goto reject;
         /* Reject due to energy in T=0 case */
         else if(temp == 0 && trialEnergy > currentEnergy)
-        {
-            projNum[changes[0]] = changes[1];
-            projPref[changes[0]] = changes[2];
-            //printf("reject due to energy\n");
-            continue;
-        }
-        /* reject due to lecturer constraint violation */
+            goto reject;
 
         /* This is (in theory) impossible. We count because as its a nice
          * tracker for if things are broken. */
@@ -199,10 +184,16 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
             continue;
         }
 
+/*accept:*/
         successfulmoves++;
         currentEnergy = trialEnergy;
         //fprintf(saveData, "%d ", currentEnergy);
         //fprintf(saveData, "\n");
+        continue;
+
+reject:
+        projNum[changes[0]] = changes[1];
+        projPref[changes[0]] = changes[2];
     }
 }
 
