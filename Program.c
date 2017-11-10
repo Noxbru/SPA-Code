@@ -177,12 +177,12 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
         if(temp > 0 && rands[0] > exp(-changeEnergy / temp))
             goto reject;
         /* Reject due to energy in T=0 case */
-        else if(temp == 0 && trialEnergy > currentEnergy)
+        else if(temp == 0 && changeEnergy > 0)
             goto reject;
 
         /* This is (in theory) impossible. We count because as its a nice
          * tracker for if things are broken. */
-        if(currentEnergy == trialEnergy)
+        if(changeEnergy == 0)
         {
             //printf("This shouldn't be happening?\n\n");
             continue;
