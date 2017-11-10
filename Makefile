@@ -1,7 +1,7 @@
 CC = clang
 EXECUTABLE = spa
 
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall -Wextra -Wno-unknown-pragmas -g
 OPTIMIZATION_FLAGS = -O2 -march=native
 LDFLAGS = -lm
 
