@@ -100,6 +100,11 @@ int main()
     /* We have a starting configuration WITH NO VIOLATIONS. */
     saveData = fopen("newData.txt", "w");
 
+    //printf("Weight 1: %f\n", weight1);
+    //printf("Weight 2: %f\n", weight2);
+    //printf("Weight 3: %f\n", weight3);
+    //printf("Weight 4: %f\n", weight4);
+
     /* Simulated Annealing time
        So, we stay at one temperature until either 1000*cols moves or 100*cols Succesful Moves.
        Then decrease and go again.
@@ -145,7 +150,6 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
         /* change the allocation here */
         changeAllocationByPref(choices, projNum, projPref, changes);
 
-        //printf(" weight 1: %f, weight 2: %f, weight 3: %f, weight 4: %f\n", weight1, weight2, weight3, weight4);
         trialEnergy = energy(projPref); /* energy of our new allocation */
         //printf("current energy and trial energy, %d, %d\n", currentEnergy, trialEnergy);
         changeEnergy = trialEnergy - currentEnergy;
