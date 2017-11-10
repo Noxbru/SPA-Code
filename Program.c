@@ -151,6 +151,18 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
 
     (void) saveData;
 
+#define MAGIC_CALCULATION(p1, p2) \
+    [(p1 - 1) << 2 | (p2 - 1)] = exp((weights[p2] - weights[p1]) / temp)
+#define MAGIC_CALCULATION2(p1) \
+    MAGIC_CALCULATION(p1,1), MAGIC_CALCULATION(p1,2), \
+    MAGIC_CALCULATION(p1,3), MAGIC_CALCULATION(p1,4)
+
+    float magic[] =
+    {
+        MAGIC_CALCULATION2(1), MAGIC_CALCULATION2(2),
+        MAGIC_CALCULATION2(3), MAGIC_CALCULATION2(4)
+    };
+
     generateRandomNumbers();
     currentEnergy = energy(projPref);
     /*printf("Temperature %f\nCurrent Energy = %f\n\n", temp,currentEnergy);*/
@@ -187,7 +199,8 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
 
         vector_random_generator(1, rands);
         /* Reject configuration due to energy - revert changes */
-        if(temp > 0 && rands[0] > exp(-changeEnergy / temp))
+        /*if(temp > 0 && rands[0] > exp(-changeEnergy / temp))*/
+        if(temp > 0 && rands[0] > magic[(changes[2] - 1) << 2 | (projPref[changes[0]] - 1)])
             goto reject;
         /* Reject due to energy in T=0 case */
         else if(temp == 0 && changeEnergy > 0)
