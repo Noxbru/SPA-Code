@@ -121,7 +121,7 @@ int main()
     {
         cycleOfMoves(choices, projNum, projPref, supConstraint, saveData);
         /* decrease temp */
-        temp -= 0.01;
+        temp -= 0.001;
     }
 
     printf("Final energy is %f\n", energy(projPref));
