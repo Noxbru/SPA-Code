@@ -74,6 +74,7 @@ double temp = 5; /* starting temperature */
 
 float energy(int projPref[]); /* calculates energy of a given allocation */
 int projClashFullCount(int projNum[]); /* counts clashes between allocations */
+int project_has_clash(int *projNum, int project);
 void generateRandomNumbers(); //ranvec.c
 int randomNum(float random, int divisor); /* turns a random number into modulo divisor so we can use it */
 void changeAllocationByPref(int choices[rows][cols], int projNum[cols], int projPref[cols], int changes[]); /* changes allocation of ONE PAIRS project based on random choice of preference */
@@ -171,7 +172,7 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
          * The former is current proj, the latter old proj */
 
         /* Reject configuration due to clash */
-        if(projClashFullCount(projNum) > 0)
+        if(project_has_clash(projNum, projNum[changes[0]]) > 0)
             goto reject;
 
         /* reject due to lecturer constraint violation */
@@ -251,6 +252,20 @@ int projClashFullCount(int projNum[])
     }
 
     return count;
+}
+
+int project_has_clash(int *projNum, int project)
+{
+    int i;
+    int count = 0;
+
+    for(i = 0; i < cols; i++)
+    {
+        if(projNum[i] == project)
+            count++;
+    }
+
+    return count > 1;
 }
 
 /* important number generator thingy */
