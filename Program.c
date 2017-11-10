@@ -84,8 +84,8 @@ int countViolations(int projNum[], float supConstraint[rows][numLec]); /* counts
 int countSupConstraintClashes(float supConstraint[rows][numLec], int projNum[], int proj); /*counts violations of lectuere constraint */
 int supervisor_has_clash(float supConstraint[rows][numLec],
         int projNum[], int project);
-void createInitialConfiguration(int choices[rows][cols], int projNum[cols], int projPref[cols], int changes[], float supConstraint[rows][numLec]); /* does what it says */
-void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols], int changes[], float supConstraint[rows][numLec], FILE *saveData); /* Does all the moves for a fixed temp.*/
+void createInitialConfiguration(int choices[rows][cols], int projNum[cols], int projPref[cols], float supConstraint[rows][numLec]); /* does what it says */
+void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols], float supConstraint[rows][numLec], FILE *saveData); /* Does all the moves for a fixed temp.*/
 void init_vector_random_generator(int, int);
 void vector_random_generator(int, double *);
 /* end of function initialisations */
@@ -97,7 +97,6 @@ int main()
     int i;
     int projNum[cols]; /* for each pair, stores what number project they are currently assigned */
     int projPref[cols]; /* for each pair, stores what preference their currently assigned project is. NOTE the preference stored here is not zero-indexed. */
-    int changes[3]; /* 0 is PAIR, 1 is PROJECT, 2 is PREF */
 
     FILE *finalConfig; /* this file saves the final configuration - which pair have what project */
     FILE *saveData;
@@ -108,7 +107,7 @@ int main()
     readChoices(choices);
     readLecturers(supConstraint);
 
-    createInitialConfiguration(choices, projNum, projPref, changes, supConstraint);
+    createInitialConfiguration(choices, projNum, projPref, supConstraint);
     /* We have a starting configuration WITH NO VIOLATIONS. */
     saveData = fopen("newData.txt", "w");
 
@@ -123,7 +122,7 @@ int main()
        */
     while(temp >= 0)
     {
-        cycleOfMoves(choices, projNum, projPref, changes, supConstraint, saveData);
+        cycleOfMoves(choices, projNum, projPref, supConstraint, saveData);
         /* decrease temp */
         temp -= 0.01;
     }
@@ -142,7 +141,7 @@ int main()
     return 0;
 }
 
-void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols], int changes[], float supConstraint[rows][numLec], FILE *saveData)
+void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols], float supConstraint[rows][numLec], FILE *saveData)
 {
     int successfulmoves = 0;
     int moves = 0;
@@ -150,6 +149,7 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
     float changeEnergy;
     /*float ratioEnergy;*/
     int lecClashes;
+    int changes[3]; /* 0 is PAIR, 1 is PROJECT, 2 is PREF */
 
     (void) saveData;
 
@@ -431,11 +431,12 @@ int supervisor_has_clash(float supConstraint[rows][numLec],
 }
 
 /* create an initial configuration. Start at random, and then accept any change (again randomly determined) that reduces the number of constraints being violated. We are finished when no constraints are being vioalted. */
-void createInitialConfiguration(int choices[rows][cols], int projNum[cols], int projPref[cols], int changes[], float supConstraint[rows][numLec])
+void createInitialConfiguration(int choices[rows][cols], int projNum[cols], int projPref[cols], float supConstraint[rows][numLec])
 {
     int violationCount1, violationCount2; /* count number of violations. 1 is "old", 2 is "current" */
     int pref; /* integer from 1 to 4 */
     int i, j;
+    int changes[3]; /* 0 is PAIR, 1 is PROJECT, 2 is PREF */
 
     for (i = 0; i < cols; i++)
     {
