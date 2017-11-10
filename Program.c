@@ -53,10 +53,19 @@ char fileName2[] = "SupervisorExample.csv"; /* This file has the data to fill in
 
 /*weightings*/
 /***THIS IS VERSION WITH 4.7, 4.15, 3, 2.3 (out of 5)**/
-float weight1 = (100.f / cols);
-float weight2 = (100.f / cols) * (4.15f / 4.7f);
-float weight3 = (100.f / cols) * (3.00f / 4.7f);
-float weight4 = (100.f / cols) * (2.35f / 4.7f);
+const float weight1 = (100.f / cols);
+const float weight2 = (100.f / cols) * (4.15f / 4.7f);
+const float weight3 = (100.f / cols) * (3.00f / 4.7f);
+const float weight4 = (100.f / cols) * (2.35f / 4.7f);
+
+float weights[5] =
+{
+    0,
+    weight1,
+    weight2,
+    weight3,
+    weight4
+};
 
 /*global variables*/
 double rands[100000]; /* home to random numbers */
@@ -150,10 +159,13 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
         /* change the allocation here */
         changeAllocationByPref(choices, projNum, projPref, changes);
 
-        trialEnergy = energy(projPref); /* energy of our new allocation */
-        //printf("current energy and trial energy, %d, %d\n", currentEnergy, trialEnergy);
-        changeEnergy = trialEnergy - currentEnergy;
+        /* weights[chages[2]]           is the weight of the old project
+         * weights[projPref[chages[0]]] is the weight of the new project */
+        changeEnergy = weights[changes[2]] - weights[projPref[changes[0]]];
+        trialEnergy = currentEnergy + changeEnergy;
         /*ratioEnergy = fabs(trialEnergy / currentEnergy);*/
+
+        //printf("current energy and trial energy, %d, %d\n", currentEnergy, trialEnergy);
 
         /* projNum[changes[0]] != changes[1] at this point.
          * The former is current proj, the latter old proj */
