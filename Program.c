@@ -82,6 +82,8 @@ void readChoices(int choices[rows][cols]); /* reads in the choices file */
 void readLecturers(float supConstraint[rows][numLec]); /* reads in the lecturer constraint file */
 int countViolations(int projNum[], float supConstraint[rows][numLec]); /* counts violations of constraints */
 int countSupConstraintClashes(float supConstraint[rows][numLec], int projNum[], int proj); /*counts violations of lectuere constraint */
+int supervisor_has_clash(float supConstraint[rows][numLec],
+        int projNum[], int project);
 void createInitialConfiguration(int choices[rows][cols], int projNum[cols], int projPref[cols], int changes[], float supConstraint[rows][numLec]); /* does what it says */
 void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols], int changes[], float supConstraint[rows][numLec], FILE *saveData); /* Does all the moves for a fixed temp.*/
 void init_vector_random_generator(int, int);
@@ -188,7 +190,8 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
             goto reject;
 
         /* reject due to lecturer constraint violation */
-        lecClashes = countSupConstraintClashes(supConstraint, projNum, projNum[changes[0]]);
+        /*lecClashes = countSupConstraintClashes(supConstraint, projNum, projNum[changes[0]]);*/
+        lecClashes = supervisor_has_clash(supConstraint, projNum, projNum[changes[0]]);
         if(lecClashes > 0)
             goto reject;
 
@@ -389,6 +392,42 @@ int countSupConstraintClashes(float supConstraint[rows][numLec], int projNum[], 
     }
 
     return clash;
+}
+
+int supervisor_has_clash(float supConstraint[rows][numLec],
+        int projNum[], int project)
+{
+    int lecturer;
+    int proj;
+    int group;
+
+    float sum;
+
+    for(lecturer = 0; lecturer < numLec; lecturer++)
+    {
+        if(supConstraint[project][lecturer] != 0)
+        {
+            sum = 0;
+            for(proj = 0; proj < rows; proj++)
+            {
+                if(supConstraint[proj][lecturer] != 0)
+                {
+                    for(group = 0; group < cols; group++)
+                    {
+                        if(projNum[group] == proj)
+                        {
+                            sum += supConstraint[proj][lecturer];
+                        }
+                    }
+                }
+            }
+
+            if(sum > 1)
+                return 1;
+        }
+    }
+
+    return 0;
 }
 
 /* create an initial configuration. Start at random, and then accept any change (again randomly determined) that reduces the number of constraints being violated. We are finished when no constraints are being vioalted. */
