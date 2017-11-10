@@ -1,4 +1,4 @@
-CC = gcc
+CC = clang
 EXECUTABLE = spa
 
 CFLAGS = -Wall -Wextra
@@ -7,7 +7,7 @@ LDFLAGS = -lm
 
 CFLAGS+=$(OPTIMIZATION_FLAGS)
 
-SOURCES = Program.c ranvec.c
+SOURCES = Program.c
 BIN = spa
 
 

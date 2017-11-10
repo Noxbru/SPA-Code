@@ -68,7 +68,6 @@ float weights[5] =
 };
 
 /*global variables*/
-double rands[100000]; /* home to random numbers */
 double temp = 5; /* starting temperature */
 
 
@@ -86,8 +85,6 @@ int supervisor_has_clash(float supConstraint[rows][numLec],
         int projNum[], int project);
 void createInitialConfiguration(int choices[rows][cols], int projNum[cols], int projPref[cols], float supConstraint[rows][numLec]); /* does what it says */
 void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols], float supConstraint[rows][numLec], FILE *saveData); /* Does all the moves for a fixed temp.*/
-void init_vector_random_generator(int, int);
-void vector_random_generator(int, double *);
 /* end of function initialisations */
 
 int main()
@@ -124,7 +121,7 @@ int main()
     {
         cycleOfMoves(choices, projNum, projPref, supConstraint, saveData);
         /* decrease temp */
-        temp -= 0.01;
+        temp -= 0.001;
     }
 
     printf("Final energy is %f\n", energy(projPref));
@@ -150,6 +147,8 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
     /*float ratioEnergy;*/
     int lecClashes;
     int changes[3]; /* 0 is PAIR, 1 is PROJECT, 2 is PREF */
+
+    double r;
 
     (void) saveData;
 
@@ -200,10 +199,10 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
          *    goto accept;
          */
 
-        vector_random_generator(1, rands);
+        r = rand() / (double) RAND_MAX;
         /* Reject configuration due to energy - revert changes */
         /*if(temp > 0 && rands[0] > exp(-changeEnergy / temp))*/
-        if(temp > 0 && rands[0] > magic[(changes[2] - 1) << 2 | (projPref[changes[0]] - 1)])
+        if(temp > 0 && r > magic[(changes[2] - 1) << 2 | (projPref[changes[0]] - 1)])
             goto reject;
         /* Reject due to energy in T=0 case */
         else if(temp == 0 && changeEnergy > 0)
@@ -287,11 +286,12 @@ int project_has_clash(int *projNum, int project)
 /* important number generator thingy */
 void generateRandomNumbers()
 {
-    long int seed, nrand = 100000;
+    static int seed;
+    seed++;
 
     /*seed = time(NULL);*/
-    time((time_t *) &seed);
-    init_vector_random_generator(seed, nrand);
+    /*time((time_t *) &seed);*/
+    srand(seed);
 }
 
 /* takes a random Number (which is between 0 and 1) and makes it between whatever we want. RETURNS this number. */
@@ -307,18 +307,19 @@ int randomNum(float random, int divisor)
  * and then making the change. Stores the change nicely in the changes function.*/
 void changeAllocationByPref(int choices[rows][cols], int projNum[cols], int projPref[cols], int changes[])
 {
+    double r;
     int pair, pref;
     int i;
 
-    vector_random_generator(1, rands);
-    pair = randomNum(rands[0], cols);
+    r = rand() / (double) RAND_MAX;
+    pair = randomNum(r, cols);
     //printf("\npair current pref is %d\n", projPref[pair]);
 
     /* Avoid picking same preference - waste of a move and time. */
     do
     {
-        vector_random_generator(1, rands);
-        pref = randomNum(rands[0], 4) + 1;
+        r = rand() / (double) RAND_MAX;
+        pref = randomNum(r, 4) + 1;
     }
     while(projPref[pair] == pref);
 
@@ -440,8 +441,8 @@ void createInitialConfiguration(int choices[rows][cols], int projNum[cols], int 
 
     for (i = 0; i < cols; i++)
     {
-        vector_random_generator(1,rands);
-        pref = randomNum(rands[0], 4);
+        double r = rand() / (double) RAND_MAX;
+        pref = randomNum(r, 4);
 
         /* find the choice with the preference, and assign it */
         for(j = 0; j < rows; j++)
