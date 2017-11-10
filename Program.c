@@ -121,7 +121,7 @@ int main()
     {
         cycleOfMoves(choices, projNum, projPref, supConstraint, saveData);
         /* decrease temp */
-        temp -= 0.001;
+        temp -= 0.01;
     }
 
     printf("Final energy is %f\n", energy(projPref));
@@ -238,15 +238,7 @@ float energy(int projPref[])
     float energy = 0;
 
     for(i = 0; i < cols; i++)
-    {
-        switch(projPref[i])
-        {
-        case 1: energy -= weight1; break;
-        case 2: energy -= weight2; break;
-        case 3: energy -= weight3; break;
-        case 4: energy -= weight4; break;
-        }
-    }
+        energy -= weights[projPref[i]];
 
     return energy;
 }
