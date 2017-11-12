@@ -28,10 +28,10 @@
 /*           Should be a CSV file.                                                                          */
 /*                                                                                                          */
 /* Variables to change:                                                                                     */
-/*   * rows - this is the number of projects on offer (and hence the number of rows in both                 */
+/*   * num_projects - this is the number of projects on offer (and hence the number of rows in both         */
 /*            your fileName1 and fileName2.                                                                 */
-/*   * cols - this is the number of pairs who have chosen projects (and hence the number of                 */
-/*            columns in fileName1). Update the constant "#define cols as well.                             */
+/*   * num_groups - this is the number of pairs who have chosen projects (and hence the number of           */
+/*            columns in fileName1). Update the constant "#define num_groups as well.                       */
 /*   * numLec - the number of supervisors (and hence the number of columns in fileName2).                   */
 /*   * weightings - 'weighti' is for preference i used in the function 'energy'. Needs to be integers.      */
 /*                                                                                                          */
@@ -44,19 +44,18 @@
 /************************************************************************************************************/
 
 /*Variables to change */
-int rows = 58; /* NUMBER OF PROJECTS */
-int cols = 19; /* NUMBER OF PAIRS (some might be singletons) */
-#define cols 19
+const int num_projects = 58;
+const int num_groups   = 19;
 int numLec = 27; /* NUMBER OF LECTURERS */
 char fileName1[] = "StudentExample.csv"; /* This file has the data to fill choices - is passed into readChoices */
 char fileName2[] = "SupervisorExample.csv"; /* This file has the data to fill in supConstraint - is passed into readLecturers */
 
 /*weightings*/
 /***THIS IS VERSION WITH 4.7, 4.15, 3, 2.3 (out of 5)**/
-const float weight1 = (100.f / cols);
-const float weight2 = (100.f / cols) * (4.15f / 4.7f);
-const float weight3 = (100.f / cols) * (3.00f / 4.7f);
-const float weight4 = (100.f / cols) * (2.35f / 4.7f);
+const float weight1 = (100.f / num_groups);
+const float weight2 = (100.f / num_groups) * (4.15f / 4.7f);
+const float weight3 = (100.f / num_groups) * (3.00f / 4.7f);
+const float weight4 = (100.f / num_groups) * (2.35f / 4.7f);
 
 float weights[5] =
 {
@@ -76,24 +75,24 @@ int projClashFullCount(int projNum[]); /* counts clashes between allocations */
 int project_has_clash(int *projNum, int project);
 void generateRandomNumbers(); //ranvec.c
 int randomNum(float random, int divisor); /* turns a random number into modulo divisor so we can use it */
-void changeAllocationByPref(int choices[rows][cols], int projNum[cols], int projPref[cols], int changes[]); /* changes allocation of ONE PAIRS project based on random choice of preference */
-void readChoices(int choices[rows][cols]); /* reads in the choices file */
-void readLecturers(float supConstraint[rows][numLec]); /* reads in the lecturer constraint file */
-int countViolations(int projNum[], float supConstraint[rows][numLec]); /* counts violations of constraints */
-int countSupConstraintClashes(float supConstraint[rows][numLec], int projNum[], int proj); /*counts violations of lectuere constraint */
-int supervisor_has_clash(float supConstraint[rows][numLec],
+void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], int changes[]); /* changes allocation of ONE PAIRS project based on random choice of preference */
+void readChoices(int choices[num_projects][num_groups]); /* reads in the choices file */
+void readLecturers(float supConstraint[num_projects][numLec]); /* reads in the lecturer constraint file */
+int countViolations(int projNum[], float supConstraint[num_projects][numLec]); /* counts violations of constraints */
+int countSupConstraintClashes(float supConstraint[num_projects][numLec], int projNum[], int proj); /*counts violations of lectuere constraint */
+int supervisor_has_clash(float supConstraint[num_projects][numLec],
         int projNum[], int project);
-void createInitialConfiguration(int choices[rows][cols], int projNum[cols], int projPref[cols], float supConstraint[rows][numLec]); /* does what it says */
-void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols], float supConstraint[rows][numLec], FILE *saveData); /* Does all the moves for a fixed temp.*/
+void createInitialConfiguration(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][numLec]); /* does what it says */
+void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][numLec], FILE *saveData); /* Does all the moves for a fixed temp.*/
 /* end of function initialisations */
 
 int main()
 {
-    int choices[rows][cols]; /* This has the choices the pair made in. We import it from csv file. */
-    float supConstraint[rows][numLec]; /* This has all the data needed for calculating supervisor constraints in - including which projects a supervisor has and how many they can supervise. Imported from csv file */
+    int choices[num_projects][num_groups]; /* This has the choices the pair made in. We import it from csv file. */
+    float supConstraint[num_projects][numLec]; /* This has all the data needed for calculating supervisor constraints in - including which projects a supervisor has and how many they can supervise. Imported from csv file */
     int i;
-    int projNum[cols]; /* for each pair, stores what number project they are currently assigned */
-    int projPref[cols]; /* for each pair, stores what preference their currently assigned project is. NOTE the preference stored here is not zero-indexed. */
+    int projNum[num_groups]; /* for each pair, stores what number project they are currently assigned */
+    int projPref[num_groups]; /* for each pair, stores what preference their currently assigned project is. NOTE the preference stored here is not zero-indexed. */
 
     FILE *finalConfig; /* this file saves the final configuration - which pair have what project */
     FILE *saveData;
@@ -114,7 +113,7 @@ int main()
     //printf("Weight 4: %f\n", weight4);
 
     /* Simulated Annealing time
-       So, we stay at one temperature until either 1000*cols moves or 100*cols Succesful Moves.
+       So, we stay at one temperature until either 1000*num_groups moves or 100*num_groups Succesful Moves.
        Then decrease and go again.
        */
     while(temp >= 0)
@@ -127,7 +126,7 @@ int main()
     printf("Final energy is %f\n", energy(projPref));
     finalConfig = fopen("finalConfig.txt", "a");
     /* print final configuration to file */
-    for(i = 0; i < cols; i++)
+    for(i = 0; i < num_groups; i++)
     {
         fprintf(finalConfig, "%d,%d,%d\n", i+1, projNum[i]+1, projPref[i]);
     }
@@ -138,7 +137,7 @@ int main()
     return 0;
 }
 
-void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols], float supConstraint[rows][numLec], FILE *saveData)
+void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][numLec], FILE *saveData)
 {
     int successfulmoves = 0;
     int moves = 0;
@@ -167,7 +166,7 @@ void cycleOfMoves(int choices[rows][cols], int projNum[cols], int projPref[cols]
     generateRandomNumbers();
     currentEnergy = energy(projPref);
     /*printf("Temperature %f\nCurrent Energy = %f\n\n", temp,currentEnergy);*/
-    while(moves < (1000 * cols) && successfulmoves < (100 * cols))
+    while(moves < (1000 * num_groups) && successfulmoves < (100 * num_groups))
     {
         moves++;
         /* change the allocation here */
@@ -237,7 +236,7 @@ float energy(int projPref[])
     int i = 0;
     float energy = 0;
 
-    for(i = 0; i < cols; i++)
+    for(i = 0; i < num_groups; i++)
         energy -= weights[projPref[i]];
 
     return energy;
@@ -249,9 +248,9 @@ int projClashFullCount(int projNum[])
 {
     int i, j, count = 0;
 
-    for(i = 0; i < cols; i++)
+    for(i = 0; i < num_groups; i++)
     {
-        for(j = i + 1; j < cols; j++)
+        for(j = i + 1; j < num_groups; j++)
         {
             if(projNum[i] == projNum[j])
                 count++;
@@ -266,7 +265,7 @@ int project_has_clash(int *projNum, int project)
     int i;
     int count = 0;
 
-    for(i = 0; i < cols; i++)
+    for(i = 0; i < num_groups; i++)
     {
         if(projNum[i] == project)
             count++;
@@ -297,14 +296,14 @@ int randomNum(float random, int divisor)
 
 /* This functions CHANGES THE ALLOCATION. Based on picking a pair, and then picking a project,
  * and then making the change. Stores the change nicely in the changes function.*/
-void changeAllocationByPref(int choices[rows][cols], int projNum[cols], int projPref[cols], int changes[])
+void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], int changes[])
 {
     double r;
     int pair, pref;
     int i;
 
     r = rand() / (double) RAND_MAX;
-    pair = randomNum(r, cols);
+    pair = randomNum(r, num_groups);
     //printf("\npair current pref is %d\n", projPref[pair]);
 
     /* Avoid picking same preference - waste of a move and time. */
@@ -320,7 +319,7 @@ void changeAllocationByPref(int choices[rows][cols], int projNum[cols], int proj
     changes[2] = projPref[pair]; /* = choices[changes[1]][changes[0]] = choices[projNum[pair]][pair]*/
     //printf("Energy before reallocation is %d\n", energy(projPref));
     /* make the change */
-    for(i = 0; i < rows; i++)
+    for(i = 0; i < num_projects; i++)
     {
         if(choices[i][pair] == pref)
         {
@@ -334,13 +333,13 @@ void changeAllocationByPref(int choices[rows][cols], int projNum[cols], int proj
 }
 
 /* Does what it says. RETURNS a count */
-int countViolations(int projNum[], float supConstraint[rows][numLec])
+int countViolations(int projNum[], float supConstraint[num_projects][numLec])
 {
     int count = 0;
     int k;
 
     count += projClashFullCount(projNum);
-    for (k = 0; k < cols; k++)
+    for (k = 0; k < num_groups; k++)
     {
         count += countSupConstraintClashes(supConstraint, projNum, projNum[k]);
     }
@@ -351,7 +350,7 @@ int countViolations(int projNum[], float supConstraint[rows][numLec])
 /* counts how many times the lecturer/supervisor constraint is violated. */
 
 //for each project assigned to a pair, how many times is lecturer constraint violated.
-int countSupConstraintClashes(float supConstraint[rows][numLec], int projNum[], int proj)
+int countSupConstraintClashes(float supConstraint[num_projects][numLec], int projNum[], int proj)
 {
     int i, j, l;
     /*
@@ -368,9 +367,9 @@ int countSupConstraintClashes(float supConstraint[rows][numLec], int projNum[], 
         sum = 0;
         if(supConstraint[proj][j] != 0)
         {
-            for(i = 0; i < rows; i++)
+            for(i = 0; i < num_projects; i++)
             {
-                for(l = 0; l < cols; l++)
+                for(l = 0; l < num_groups; l++)
                 {
                     if(projNum[l] == i)
                     {
@@ -387,7 +386,7 @@ int countSupConstraintClashes(float supConstraint[rows][numLec], int projNum[], 
     return clash;
 }
 
-int supervisor_has_clash(float supConstraint[rows][numLec],
+int supervisor_has_clash(float supConstraint[num_projects][numLec],
         int projNum[], int project)
 {
     int lecturer;
@@ -401,11 +400,11 @@ int supervisor_has_clash(float supConstraint[rows][numLec],
         if(supConstraint[project][lecturer] != 0)
         {
             sum = 0;
-            for(proj = 0; proj < rows; proj++)
+            for(proj = 0; proj < num_projects; proj++)
             {
                 if(supConstraint[proj][lecturer] != 0)
                 {
-                    for(group = 0; group < cols; group++)
+                    for(group = 0; group < num_groups; group++)
                     {
                         if(projNum[group] == proj)
                         {
@@ -424,20 +423,20 @@ int supervisor_has_clash(float supConstraint[rows][numLec],
 }
 
 /* create an initial configuration. Start at random, and then accept any change (again randomly determined) that reduces the number of constraints being violated. We are finished when no constraints are being vioalted. */
-void createInitialConfiguration(int choices[rows][cols], int projNum[cols], int projPref[cols], float supConstraint[rows][numLec])
+void createInitialConfiguration(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][numLec])
 {
     int violationCount1, violationCount2; /* count number of violations. 1 is "old", 2 is "current" */
     int pref; /* integer from 1 to 4 */
     int i, j;
     int changes[3]; /* 0 is PAIR, 1 is PROJECT, 2 is PREF */
 
-    for (i = 0; i < cols; i++)
+    for (i = 0; i < num_groups; i++)
     {
         double r = rand() / (double) RAND_MAX;
         pref = randomNum(r, 4);
 
         /* find the choice with the preference, and assign it */
-        for(j = 0; j < rows; j++)
+        for(j = 0; j < num_projects; j++)
         {
             if(choices[j][i] == pref + 1)
             {
@@ -471,7 +470,7 @@ void createInitialConfiguration(int choices[rows][cols], int projNum[cols], int 
 }
 
 /* read in the data for which pairs have what projects as their choices */
-void readChoices(int choices[rows][cols])
+void readChoices(int choices[num_projects][num_groups])
 {
     int c;
     FILE *fin;
@@ -529,7 +528,7 @@ void readChoices(int choices[rows][cols])
 }
 
 /* reads in the lecturer constraint into supConstraint */
-void readLecturers(float supConstraint[rows][numLec])
+void readLecturers(float supConstraint[num_projects][numLec])
 {
     char c;
     FILE *fin;
