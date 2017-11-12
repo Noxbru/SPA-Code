@@ -66,6 +66,15 @@ float weights[5] =
     weight4
 };
 
+struct change_t
+{
+    int group;
+    int old_project;
+    int old_preference;
+    int new_project;
+    int new_preference;
+}  /* optional variable list */;
+
 /*global variables*/
 double temp = 5; /* starting temperature */
 
@@ -75,7 +84,7 @@ int projClashFullCount(int projNum[]); /* counts clashes between allocations */
 int project_has_clash(int *projNum, int project);
 void generateRandomNumbers(); //ranvec.c
 int randomNum(float random, int divisor); /* turns a random number into modulo divisor so we can use it */
-void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], int changes[]); /* changes allocation of ONE PAIRS project based on random choice of preference */
+void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], struct change_t *change); /* changes allocation of ONE PAIRS project based on random choice of preference */
 void readChoices(int choices[num_projects][num_groups]); /* reads in the choices file */
 void readLecturers(float supConstraint[num_projects][num_supervisors]); /* reads in the lecturer constraint file */
 int countViolations(int projNum[], float supConstraint[num_projects][num_supervisors]); /* counts violations of constraints */
@@ -145,7 +154,7 @@ void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups]
     float changeEnergy;
     /*float ratioEnergy;*/
     int lecClashes;
-    int changes[3]; /* 0 is PAIR, 1 is PROJECT, 2 is PREF */
+    struct change_t change;
 
     double r;
 
@@ -170,26 +179,20 @@ void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups]
     {
         moves++;
         /* change the allocation here */
-        changeAllocationByPref(choices, projNum, projPref, changes);
+        changeAllocationByPref(choices, projNum, projPref, &change);
 
-        /* weights[chages[2]]           is the weight of the old project
-         * weights[projPref[chages[0]]] is the weight of the new project */
-        changeEnergy = weights[changes[2]] - weights[projPref[changes[0]]];
+        changeEnergy = weights[change.old_preference] - weights[change.new_preference];
         trialEnergy = currentEnergy + changeEnergy;
         /*ratioEnergy = fabs(trialEnergy / currentEnergy);*/
 
         //printf("current energy and trial energy, %d, %d\n", currentEnergy, trialEnergy);
 
-        /* projNum[changes[0]] != changes[1] at this point.
-         * The former is current proj, the latter old proj */
-
         /* Reject configuration due to clash */
-        if(project_has_clash(projNum, projNum[changes[0]]) > 0)
+        if(project_has_clash(projNum, change.new_project) > 0)
             goto reject;
 
         /* reject due to lecturer constraint violation */
-        /*lecClashes = countSupConstraintClashes(supConstraint, projNum, projNum[changes[0]]);*/
-        lecClashes = supervisor_has_clash(supConstraint, projNum, projNum[changes[0]]);
+        lecClashes = supervisor_has_clash(supConstraint, projNum, change.new_project);
         if(lecClashes > 0)
             goto reject;
 
@@ -201,7 +204,7 @@ void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups]
         r = rand() / (double) RAND_MAX;
         /* Reject configuration due to energy - revert changes */
         /*if(temp > 0 && rands[0] > exp(-changeEnergy / temp))*/
-        if(temp > 0 && r > magic[(changes[2] - 1) << 2 | (projPref[changes[0]] - 1)])
+        if(temp > 0 && r > magic[(change.old_preference - 1) << 2 | (change.new_preference - 1)])
             goto reject;
         /* Reject due to energy in T=0 case */
         else if(temp == 0 && changeEnergy > 0)
@@ -223,8 +226,8 @@ void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups]
         continue;
 
 reject:
-        projNum[changes[0]] = changes[1];
-        projPref[changes[0]] = changes[2];
+        projNum[change.group] = change.old_project;
+        projPref[change.group] = change.old_preference;
     }
 }
 
@@ -296,7 +299,7 @@ int randomNum(float random, int divisor)
 
 /* This functions CHANGES THE ALLOCATION. Based on picking a pair, and then picking a project,
  * and then making the change. Stores the change nicely in the changes function.*/
-void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], int changes[])
+void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], struct change_t *change)
 {
     double r;
     int pair, pref;
@@ -314,9 +317,9 @@ void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[n
     }
     while(projPref[pair] == pref);
 
-    changes[0] = pair;
-    changes[1] = projNum[pair];
-    changes[2] = projPref[pair]; /* = choices[changes[1]][changes[0]] = choices[projNum[pair]][pair]*/
+    change->group = pair;
+    change->old_project = projNum[pair];
+    change->old_preference = projPref[pair];
     //printf("Energy before reallocation is %d\n", energy(projPref));
     /* make the change */
     for(i = 0; i < num_projects; i++)
@@ -325,6 +328,9 @@ void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[n
         {
             projNum[pair] = i;
             projPref[pair] = pref;
+
+            change->new_project = i;
+            change->new_preference = pref;
 
             /*return;*/
         }
@@ -428,7 +434,7 @@ void createInitialConfiguration(int choices[num_projects][num_groups], int projN
     int violationCount1, violationCount2; /* count number of violations. 1 is "old", 2 is "current" */
     int pref; /* integer from 1 to 4 */
     int i, j;
-    int changes[3]; /* 0 is PAIR, 1 is PROJECT, 2 is PREF */
+    struct change_t change;
 
     for (i = 0; i < num_groups; i++)
     {
@@ -451,15 +457,15 @@ void createInitialConfiguration(int choices[num_projects][num_groups], int projN
     {
         //  printf("violationCount1=%i\n",violationCount1);
 
-        changeAllocationByPref(choices, projNum, projPref, changes);
+        changeAllocationByPref(choices, projNum, projPref, &change);
         violationCount2 = countViolations(projNum, supConstraint);
 
         /* In this case, the number of violations has INCREASED, so we
          * REJECT it and REVERT to the old allocation. */
         if(violationCount2 > violationCount1)
         {
-            projNum[changes[0]] = changes[1];
-            projPref[changes[0]] = changes[2];
+            projNum[change.group] = change.old_project;
+            projPref[change.group] = change.old_preference;
         }
         /* update violationCount1 */
         else
