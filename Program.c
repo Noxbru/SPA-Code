@@ -92,7 +92,7 @@ void readLecturers(float supConstraint[num_projects][num_supervisors]); /* reads
 int countViolations(int projNum[], float supConstraint[num_projects][num_supervisors]); /* counts violations of constraints */
 int countSupConstraintClashes(float supConstraint[num_projects][num_supervisors], int projNum[], int proj); /*counts violations of lectuere constraint */
 int supervisor_has_clash(float supConstraint[num_projects][num_supervisors],
-        int projNum[], int project);
+        int project);
 void createInitialConfiguration(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors]); /* does what it says */
 void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors], FILE *saveData); /* Does all the moves for a fixed temp.*/
 /* end of function initialisations */
@@ -190,7 +190,7 @@ void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups]
         //printf("current energy and trial energy, %d, %d\n", currentEnergy, trialEnergy);
 
         /* reject due to lecturer constraint violation */
-        lecClashes = supervisor_has_clash(supConstraint, projNum, change.new_project);
+        lecClashes = supervisor_has_clash(supConstraint, change.new_project);
         if(lecClashes > 0)
             goto reject;
 
@@ -404,11 +404,10 @@ int countSupConstraintClashes(float supConstraint[num_projects][num_supervisors]
 }
 
 int supervisor_has_clash(float supConstraint[num_projects][num_supervisors],
-        int projNum[], int project)
+        int project)
 {
     int supervisor;
     int proj;
-    int group;
 
     float sum;
 
@@ -419,15 +418,10 @@ int supervisor_has_clash(float supConstraint[num_projects][num_supervisors],
             sum = 0;
             for(proj = 0; proj < num_projects; proj++)
             {
-                if(supConstraint[proj][supervisor] != 0)
+                if(supConstraint[proj][supervisor] != 0 &&
+                   group_for_project[proj] != -1)
                 {
-                    for(group = 0; group < num_groups; group++)
-                    {
-                        if(projNum[group] == proj)
-                        {
-                            sum += supConstraint[proj][supervisor];
-                        }
-                    }
+                    sum += supConstraint[proj][supervisor];
                 }
             }
 
