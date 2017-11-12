@@ -66,6 +66,8 @@ float weights[5] =
     weight4
 };
 
+int group_for_project[num_projects] = {-1};
+
 struct change_t
 {
     int group;
@@ -228,6 +230,8 @@ void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups]
 reject:
         projNum[change.group] = change.old_project;
         projPref[change.group] = change.old_preference;
+        group_for_project[change.old_project] = change.group;
+        group_for_project[change.new_project] = -1;
     }
 }
 
@@ -305,37 +309,48 @@ void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[n
     int pair, pref;
     int i;
 
-    r = rand() / (double) RAND_MAX;
-    pair = randomNum(r, num_groups);
-    //printf("\npair current pref is %d\n", projPref[pair]);
-
-    /* Avoid picking same preference - waste of a move and time. */
-    do
+    while(1)
     {
         r = rand() / (double) RAND_MAX;
-        pref = randomNum(r, 4) + 1;
-    }
-    while(projPref[pair] == pref);
+        pair = randomNum(r, num_groups);
+        //printf("\npair current pref is %d\n", projPref[pair]);
 
-    change->group = pair;
-    change->old_project = projNum[pair];
-    change->old_preference = projPref[pair];
-    //printf("Energy before reallocation is %d\n", energy(projPref));
-    /* make the change */
-    for(i = 0; i < num_projects; i++)
-    {
-        if(choices[i][pair] == pref)
+        /* Avoid picking same preference - waste of a move and time. */
+        do
         {
-            projNum[pair] = i;
-            projPref[pair] = pref;
-
-            change->new_project = i;
-            change->new_preference = pref;
-
-            /*return;*/
+            r = rand() / (double) RAND_MAX;
+            pref = randomNum(r, 4) + 1;
         }
+        while(projPref[pair] == pref);
+
+        change->group = pair;
+        change->old_project = projNum[pair];
+        change->old_preference = projPref[pair];
+        //printf("Energy before reallocation is %d\n", energy(projPref));
+        /* make the change */
+        for(i = 0; i < num_projects; i++)
+        {
+            if(choices[i][pair] == pref)
+            {
+                if(group_for_project[i] == -1)
+                {
+                    projNum[pair] = i;
+                    projPref[pair] = pref;
+
+                    change->new_project = i;
+                    change->new_preference = pref;
+
+                    group_for_project[i] = pair;
+                    group_for_project[change->old_project] = -1;
+
+                    return;
+                }
+                else
+                    break;
+            }
+        }
+        //printf("Energy after reallocation is %d\n", energy(projPref));
     }
-    //printf("Energy after reallocation is %d\n", energy(projPref));
 }
 
 /* Does what it says. RETURNS a count */
@@ -452,6 +467,13 @@ void createInitialConfiguration(int choices[num_projects][num_groups], int projN
         }
     }
 
+    /* Technically, we should fill this with true information, but we need
+     * it to be filled with -1 so that we can get an initial configuration
+     * the real information will be filled AFTER said initial configuration
+     * has been achieved */
+    for(i = 0; i < num_projects; i++)
+        group_for_project[i] = -1;
+
     violationCount1 = countViolations(projNum, supConstraint);
     while(violationCount1 > 0)
     {
@@ -466,6 +488,9 @@ void createInitialConfiguration(int choices[num_projects][num_groups], int projN
         {
             projNum[change.group] = change.old_project;
             projPref[change.group] = change.old_preference;
+
+            group_for_project[change.old_project] = change.group;
+            group_for_project[change.new_project] = -1;
         }
         /* update violationCount1 */
         else
@@ -473,6 +498,9 @@ void createInitialConfiguration(int choices[num_projects][num_groups], int projN
             violationCount1 = violationCount2;
         }
     }
+
+    for(i = 0; i < num_groups; i++)
+        group_for_project[projNum[i]] = i;
 }
 
 /* read in the data for which pairs have what projects as their choices */
