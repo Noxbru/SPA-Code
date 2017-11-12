@@ -189,10 +189,6 @@ void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups]
 
         //printf("current energy and trial energy, %d, %d\n", currentEnergy, trialEnergy);
 
-        /* Reject configuration due to clash */
-        if(project_has_clash(projNum, change.new_project) > 0)
-            goto reject;
-
         /* reject due to lecturer constraint violation */
         lecClashes = supervisor_has_clash(supConstraint, projNum, change.new_project);
         if(lecClashes > 0)
