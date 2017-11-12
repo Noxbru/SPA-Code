@@ -32,7 +32,7 @@
 /*            your fileName1 and fileName2.                                                                 */
 /*   * num_groups - this is the number of pairs who have chosen projects (and hence the number of           */
 /*            columns in fileName1). Update the constant "#define num_groups as well.                       */
-/*   * numLec - the number of supervisors (and hence the number of columns in fileName2).                   */
+/*   * num_supervisors - the number of supervisors (and hence the number of columns in fileName2).          */
 /*   * weightings - 'weighti' is for preference i used in the function 'energy'. Needs to be integers.      */
 /*                                                                                                          */
 /* When compiling in the terminal, compile this program with the random num generator file 'ranvec.c'       */
@@ -46,7 +46,7 @@
 /*Variables to change */
 const int num_projects = 58;
 const int num_groups   = 19;
-int numLec = 27; /* NUMBER OF LECTURERS */
+const int num_supervisors = 27;
 char fileName1[] = "StudentExample.csv"; /* This file has the data to fill choices - is passed into readChoices */
 char fileName2[] = "SupervisorExample.csv"; /* This file has the data to fill in supConstraint - is passed into readLecturers */
 
@@ -77,19 +77,19 @@ void generateRandomNumbers(); //ranvec.c
 int randomNum(float random, int divisor); /* turns a random number into modulo divisor so we can use it */
 void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], int changes[]); /* changes allocation of ONE PAIRS project based on random choice of preference */
 void readChoices(int choices[num_projects][num_groups]); /* reads in the choices file */
-void readLecturers(float supConstraint[num_projects][numLec]); /* reads in the lecturer constraint file */
-int countViolations(int projNum[], float supConstraint[num_projects][numLec]); /* counts violations of constraints */
-int countSupConstraintClashes(float supConstraint[num_projects][numLec], int projNum[], int proj); /*counts violations of lectuere constraint */
-int supervisor_has_clash(float supConstraint[num_projects][numLec],
+void readLecturers(float supConstraint[num_projects][num_supervisors]); /* reads in the lecturer constraint file */
+int countViolations(int projNum[], float supConstraint[num_projects][num_supervisors]); /* counts violations of constraints */
+int countSupConstraintClashes(float supConstraint[num_projects][num_supervisors], int projNum[], int proj); /*counts violations of lectuere constraint */
+int supervisor_has_clash(float supConstraint[num_projects][num_supervisors],
         int projNum[], int project);
-void createInitialConfiguration(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][numLec]); /* does what it says */
-void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][numLec], FILE *saveData); /* Does all the moves for a fixed temp.*/
+void createInitialConfiguration(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors]); /* does what it says */
+void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors], FILE *saveData); /* Does all the moves for a fixed temp.*/
 /* end of function initialisations */
 
 int main()
 {
     int choices[num_projects][num_groups]; /* This has the choices the pair made in. We import it from csv file. */
-    float supConstraint[num_projects][numLec]; /* This has all the data needed for calculating supervisor constraints in - including which projects a supervisor has and how many they can supervise. Imported from csv file */
+    float supConstraint[num_projects][num_supervisors]; /* This has all the data needed for calculating supervisor constraints in - including which projects a supervisor has and how many they can supervise. Imported from csv file */
     int i;
     int projNum[num_groups]; /* for each pair, stores what number project they are currently assigned */
     int projPref[num_groups]; /* for each pair, stores what preference their currently assigned project is. NOTE the preference stored here is not zero-indexed. */
@@ -137,7 +137,7 @@ int main()
     return 0;
 }
 
-void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][numLec], FILE *saveData)
+void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors], FILE *saveData)
 {
     int successfulmoves = 0;
     int moves = 0;
@@ -333,7 +333,7 @@ void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[n
 }
 
 /* Does what it says. RETURNS a count */
-int countViolations(int projNum[], float supConstraint[num_projects][numLec])
+int countViolations(int projNum[], float supConstraint[num_projects][num_supervisors])
 {
     int count = 0;
     int k;
@@ -350,7 +350,7 @@ int countViolations(int projNum[], float supConstraint[num_projects][numLec])
 /* counts how many times the lecturer/supervisor constraint is violated. */
 
 //for each project assigned to a pair, how many times is lecturer constraint violated.
-int countSupConstraintClashes(float supConstraint[num_projects][numLec], int projNum[], int proj)
+int countSupConstraintClashes(float supConstraint[num_projects][num_supervisors], int projNum[], int proj)
 {
     int i, j, l;
     /*
@@ -362,7 +362,7 @@ int countSupConstraintClashes(float supConstraint[num_projects][numLec], int pro
     int clash = 0;
 
     /*so, for the project proj we look across the row to see which supervisors it has. Then we go down the supervisors column and sum up the energy of the projects allocated ONLY (projNum==i bit). If sum > 1, violation */
-    for(j = 0; j < numLec; j++)
+    for(j = 0; j < num_supervisors; j++)
     {
         sum = 0;
         if(supConstraint[proj][j] != 0)
@@ -386,29 +386,29 @@ int countSupConstraintClashes(float supConstraint[num_projects][numLec], int pro
     return clash;
 }
 
-int supervisor_has_clash(float supConstraint[num_projects][numLec],
+int supervisor_has_clash(float supConstraint[num_projects][num_supervisors],
         int projNum[], int project)
 {
-    int lecturer;
+    int supervisor;
     int proj;
     int group;
 
     float sum;
 
-    for(lecturer = 0; lecturer < numLec; lecturer++)
+    for(supervisor = 0; supervisor < num_supervisors; supervisor++)
     {
-        if(supConstraint[project][lecturer] != 0)
+        if(supConstraint[project][supervisor] != 0)
         {
             sum = 0;
             for(proj = 0; proj < num_projects; proj++)
             {
-                if(supConstraint[proj][lecturer] != 0)
+                if(supConstraint[proj][supervisor] != 0)
                 {
                     for(group = 0; group < num_groups; group++)
                     {
                         if(projNum[group] == proj)
                         {
-                            sum += supConstraint[proj][lecturer];
+                            sum += supConstraint[proj][supervisor];
                         }
                     }
                 }
@@ -423,7 +423,7 @@ int supervisor_has_clash(float supConstraint[num_projects][numLec],
 }
 
 /* create an initial configuration. Start at random, and then accept any change (again randomly determined) that reduces the number of constraints being violated. We are finished when no constraints are being vioalted. */
-void createInitialConfiguration(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][numLec])
+void createInitialConfiguration(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors])
 {
     int violationCount1, violationCount2; /* count number of violations. 1 is "old", 2 is "current" */
     int pref; /* integer from 1 to 4 */
@@ -528,7 +528,7 @@ void readChoices(int choices[num_projects][num_groups])
 }
 
 /* reads in the lecturer constraint into supConstraint */
-void readLecturers(float supConstraint[num_projects][numLec])
+void readLecturers(float supConstraint[num_projects][num_supervisors])
 {
     char c;
     FILE *fin;
