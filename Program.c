@@ -90,7 +90,7 @@ void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[n
 void readChoices(int choices[num_projects][num_groups]); /* reads in the choices file */
 void readLecturers(float supConstraint[num_projects][num_supervisors]); /* reads in the lecturer constraint file */
 int countViolations(int projNum[], float supConstraint[num_projects][num_supervisors]); /* counts violations of constraints */
-int countSupConstraintClashes(float supConstraint[num_projects][num_supervisors], int projNum[], int proj); /*counts violations of lectuere constraint */
+int countSupConstraintClashes(float supConstraint[num_projects][num_supervisors], int project); /*counts violations of lectuere constraint */
 int supervisor_has_clash(float supConstraint[num_projects][num_supervisors],
         int project);
 void createInitialConfiguration(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors]); /* does what it says */
@@ -339,7 +339,7 @@ int countViolations(int projNum[], float supConstraint[num_projects][num_supervi
     count += projClashFullCount(projNum);
     for (k = 0; k < num_groups; k++)
     {
-        count += countSupConstraintClashes(supConstraint, projNum, projNum[k]);
+        count += countSupConstraintClashes(supConstraint, projNum[k]);
     }
 
     return count;
@@ -348,35 +348,29 @@ int countViolations(int projNum[], float supConstraint[num_projects][num_supervi
 /* counts how many times the lecturer/supervisor constraint is violated. */
 
 //for each project assigned to a pair, how many times is lecturer constraint violated.
-int countSupConstraintClashes(float supConstraint[num_projects][num_supervisors], int projNum[], int proj)
+int countSupConstraintClashes(float supConstraint[num_projects][num_supervisors], int project)
 {
-    int i, j, l;
-    /*
-       j is lectrer
-       i is project / row
-       l is pair.
-       */
-    float sum = 0;
+    int supervisor;
+    int proj;
+
+    float sum;
     int clash = 0;
 
-    /*so, for the project proj we look across the row to see which supervisors it has. Then we go down the supervisors column and sum up the energy of the projects allocated ONLY (projNum==i bit). If sum > 1, violation */
-    for(j = 0; j < num_supervisors; j++)
+    for(supervisor = 0; supervisor < num_supervisors; supervisor++)
     {
-        sum = 0;
-        if(supConstraint[proj][j] != 0)
+        if(supConstraint[project][supervisor] != 0)
         {
-            for(i = 0; i < num_projects; i++)
+            sum = 0;
+            for(proj = 0; proj < num_projects; proj++)
             {
-                for(l = 0; l < num_groups; l++)
+                if(supConstraint[proj][supervisor] != 0 &&
+                   group_for_project[proj] != -1)
                 {
-                    if(projNum[l] == i)
-                    {
-                        sum += supConstraint[i][j];
-                    }
+                    sum += supConstraint[proj][supervisor];
                 }
             }
 
-            if (sum > 1)
+            if(sum > 1)
                 clash++;
         }
     }
