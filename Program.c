@@ -68,7 +68,6 @@ float weights[num_preferences + 1] =
 };
 
 int group_for_project[num_projects] = {-1};
-int projects_by_pref[num_groups][num_preferences + 1] = {{0}};
 
 struct change_t
 {
@@ -87,20 +86,20 @@ float energy(int projPref[]); /* calculates energy of a given allocation */
 int projClashFullCount(int projNum[]); /* counts clashes between allocations */
 void generateRandomNumbers(); //ranvec.c
 int randomNum(float random, int divisor); /* turns a random number into modulo divisor so we can use it */
-void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], struct change_t *change); /* changes allocation of ONE PAIRS project based on random choice of preference */
-void readChoices(int choices[num_projects][num_groups]); /* reads in the choices file */
+void changeAllocationByPref(int projects_by_pref[num_groups][num_preferences + 1], int projNum[num_groups], int projPref[num_groups], struct change_t *change); /* changes allocation of ONE PAIRS project based on random choice of preference */
+void read_choices_and_preferences(int projects_by_pref[num_groups][num_preferences + 1]); /* reads in the choices file */
 void readLecturers(float supConstraint[num_projects][num_supervisors]); /* reads in the lecturer constraint file */
 int countViolations(int projNum[], float supConstraint[num_projects][num_supervisors]); /* counts violations of constraints */
 int countSupConstraintClashes(float supConstraint[num_projects][num_supervisors], int project); /*counts violations of lectuere constraint */
 int supervisor_has_clash(float supConstraint[num_projects][num_supervisors],
         int project);
-void createInitialConfiguration(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors]); /* does what it says */
-void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors], FILE *saveData); /* Does all the moves for a fixed temp.*/
+void createInitialConfiguration(int projects_by_pref[num_groups][num_preferences + 1], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors]); /* does what it says */
+void cycleOfMoves(int projects_by_pref[num_groups][num_preferences + 1], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors], FILE *saveData); /* Does all the moves for a fixed temp.*/
 /* end of function initialisations */
 
 int main()
 {
-    int choices[num_projects][num_groups]; /* This has the choices the pair made in. We import it from csv file. */
+    int projects_by_pref[num_groups][num_preferences + 1] = {{0}};
     float supConstraint[num_projects][num_supervisors]; /* This has all the data needed for calculating supervisor constraints in - including which projects a supervisor has and how many they can supervise. Imported from csv file */
     int i;
     int projNum[num_groups]; /* for each pair, stores what number project they are currently assigned */
@@ -112,10 +111,10 @@ int main()
     generateRandomNumbers();
 
     /* read in Data */
-    readChoices(choices);
+    read_choices_and_preferences(projects_by_pref);
     readLecturers(supConstraint);
 
-    createInitialConfiguration(choices, projNum, projPref, supConstraint);
+    createInitialConfiguration(projects_by_pref, projNum, projPref, supConstraint);
     /* We have a starting configuration WITH NO VIOLATIONS. */
     saveData = fopen("newData.txt", "w");
 
@@ -130,7 +129,7 @@ int main()
        */
     while(temp >= 0)
     {
-        cycleOfMoves(choices, projNum, projPref, supConstraint, saveData);
+        cycleOfMoves(projects_by_pref, projNum, projPref, supConstraint, saveData);
         /* decrease temp */
         temp -= 0.001;
     }
@@ -149,7 +148,7 @@ int main()
     return 0;
 }
 
-void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors], FILE *saveData)
+void cycleOfMoves(int projects_by_pref[num_groups][num_preferences + 1], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors], FILE *saveData)
 {
     int successfulmoves = 0;
     int moves = 0;
@@ -182,7 +181,7 @@ void cycleOfMoves(int choices[num_projects][num_groups], int projNum[num_groups]
     {
         moves++;
         /* change the allocation here */
-        changeAllocationByPref(choices, projNum, projPref, &change);
+        changeAllocationByPref(projects_by_pref, projNum, projPref, &change);
 
         changeEnergy = weights[change.old_preference] - weights[change.new_preference];
         trialEnergy = currentEnergy + changeEnergy;
@@ -286,7 +285,7 @@ int randomNum(float random, int divisor)
 
 /* This functions CHANGES THE ALLOCATION. Based on picking a pair, and then picking a project,
  * and then making the change. Stores the change nicely in the changes function.*/
-void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], struct change_t *change)
+void changeAllocationByPref(int projects_by_pref[num_groups][num_preferences + 1], int projNum[num_groups], int projPref[num_groups], struct change_t *change)
 {
     double r;
     int pair, pref;
@@ -410,7 +409,7 @@ int supervisor_has_clash(float supConstraint[num_projects][num_supervisors],
 }
 
 /* create an initial configuration. Start at random, and then accept any change (again randomly determined) that reduces the number of constraints being violated. We are finished when no constraints are being vioalted. */
-void createInitialConfiguration(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors])
+void createInitialConfiguration(int projects_by_pref[num_groups][num_preferences + 1], int projNum[num_groups], int projPref[num_groups], float supConstraint[num_projects][num_supervisors])
 {
     int violationCount1, violationCount2; /* count number of violations. 1 is "old", 2 is "current" */
     int pref; /* integer from 1 to 4 */
@@ -440,7 +439,7 @@ void createInitialConfiguration(int choices[num_projects][num_groups], int projN
     {
         //  printf("violationCount1=%i\n",violationCount1);
 
-        changeAllocationByPref(choices, projNum, projPref, &change);
+        changeAllocationByPref(projects_by_pref, projNum, projPref, &change);
         violationCount2 = countViolations(projNum, supConstraint);
 
         /* In this case, the number of violations has INCREASED, so we
@@ -465,7 +464,7 @@ void createInitialConfiguration(int choices[num_projects][num_groups], int projN
 }
 
 /* read in the data for which pairs have what projects as their choices */
-void readChoices(int choices[num_projects][num_groups])
+void read_choices_and_preferences(int projects_by_pref[num_groups][num_preferences + 1])
 {
     int c;
     FILE *fin;
@@ -489,25 +488,13 @@ void readChoices(int choices[num_projects][num_groups])
         }
 
         if(c == ',')
-        {
-            choices[row][column] = 0;
             column++;
-
-            // If the next character is a newline (or carriage return)
-            // we have to set the last column to a 0 because we can't
-            // detect it otherwise
-            c = fgetc(fin);
-            if(c == '\r' || c == '\n')
-                choices[row][column] = 0;
-            continue;
-        }
 
         if(c != ',' && c != '\n' && c != '\r')
         {
             int pref;
             ungetc(c, fin);
             fscanf(fin, "%i", &pref);
-            choices[row][column] = pref;
             projects_by_pref[column][pref] = row;
             column++;
 
