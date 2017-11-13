@@ -289,7 +289,7 @@ void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[n
 {
     double r;
     int pair, pref;
-    int i;
+    int new_project;
 
     while(1)
     {
@@ -310,26 +310,21 @@ void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[n
         change->old_preference = projPref[pair];
         //printf("Energy before reallocation is %d\n", energy(projPref));
         /* make the change */
-        for(i = 0; i < num_projects; i++)
+
+        new_project = projects_by_pref[pair][pref];
+
+        if(group_for_project[new_project] == -1)
         {
-            if(choices[i][pair] == pref)
-            {
-                if(group_for_project[i] == -1)
-                {
-                    projNum[pair] = i;
-                    projPref[pair] = pref;
+            projNum[pair] = new_project;
+            projPref[pair] = pref;
 
-                    change->new_project = i;
-                    change->new_preference = pref;
+            change->new_project = new_project;
+            change->new_preference = pref;
 
-                    group_for_project[i] = pair;
-                    group_for_project[change->old_project] = -1;
+            group_for_project[new_project] = pair;
+            group_for_project[change->old_project] = -1;
 
-                    return;
-                }
-                else
-                    break;
-            }
+            return;
         }
         //printf("Energy after reallocation is %d\n", energy(projPref));
     }
