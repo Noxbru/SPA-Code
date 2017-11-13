@@ -47,6 +47,7 @@
 const int num_projects = 58;
 const int num_groups   = 19;
 const int num_supervisors = 27;
+const int num_preferences = 4;
 char fileName1[] = "StudentExample.csv"; /* This file has the data to fill choices - is passed into readChoices */
 char fileName2[] = "SupervisorExample.csv"; /* This file has the data to fill in supConstraint - is passed into readLecturers */
 
@@ -57,7 +58,7 @@ const float weight2 = (100.f / num_groups) * (4.15f / 4.7f);
 const float weight3 = (100.f / num_groups) * (3.00f / 4.7f);
 const float weight4 = (100.f / num_groups) * (2.35f / 4.7f);
 
-float weights[5] =
+float weights[num_preferences + 1] =
 {
     0,
     weight1,
@@ -67,7 +68,7 @@ float weights[5] =
 };
 
 int group_for_project[num_projects] = {-1};
-int projects_by_pref[num_groups][5] = {{0}}; // 5 = num_preferences (4) + 1
+int projects_by_pref[num_groups][num_preferences + 1] = {{0}};
 
 struct change_t
 {
