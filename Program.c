@@ -83,7 +83,6 @@ double temp = 5; /* starting temperature */
 
 float energy(int projPref[]); /* calculates energy of a given allocation */
 int projClashFullCount(int projNum[]); /* counts clashes between allocations */
-int project_has_clash(int *projNum, int project);
 void generateRandomNumbers(); //ranvec.c
 int randomNum(float random, int divisor); /* turns a random number into modulo divisor so we can use it */
 void changeAllocationByPref(int choices[num_projects][num_groups], int projNum[num_groups], int projPref[num_groups], struct change_t *change); /* changes allocation of ONE PAIRS project based on random choice of preference */
@@ -261,20 +260,6 @@ int projClashFullCount(int projNum[])
     }
 
     return count;
-}
-
-int project_has_clash(int *projNum, int project)
-{
-    int i;
-    int count = 0;
-
-    for(i = 0; i < num_groups; i++)
-    {
-        if(projNum[i] == project)
-            count++;
-    }
-
-    return count > 1;
 }
 
 /* important number generator thingy */
