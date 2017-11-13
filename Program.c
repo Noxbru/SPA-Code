@@ -67,6 +67,7 @@ float weights[5] =
 };
 
 int group_for_project[num_projects] = {-1};
+int projects_by_pref[num_groups][5] = {{0}}; // 5 = num_preferences (4) + 1
 
 struct change_t
 {
@@ -522,6 +523,7 @@ void readChoices(int choices[num_projects][num_groups])
             ungetc(c, fin);
             fscanf(fin, "%i", &pref);
             choices[row][column] = pref;
+            projects_by_pref[column][pref] = row;
             column++;
 
             // If the next character after the number is a comma we have
