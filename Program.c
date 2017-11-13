@@ -518,8 +518,10 @@ void readChoices(int choices[num_projects][num_groups])
 
         if(c != ',' && c != '\n' && c != '\r')
         {
+            int pref;
             ungetc(c, fin);
-            fscanf(fin, "%i", &choices[row][column]);
+            fscanf(fin, "%i", &pref);
+            choices[row][column] = pref;
             column++;
 
             // If the next character after the number is a comma we have
