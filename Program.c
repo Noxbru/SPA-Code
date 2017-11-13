@@ -413,23 +413,18 @@ void createInitialConfiguration(int choices[num_projects][num_groups], int projN
 {
     int violationCount1, violationCount2; /* count number of violations. 1 is "old", 2 is "current" */
     int pref; /* integer from 1 to 4 */
-    int i, j;
+    int i;
+    int new_project;
     struct change_t change;
 
     for (i = 0; i < num_groups; i++)
     {
         double r = rand() / (double) RAND_MAX;
         pref = randomNum(r, 4) + 1;
+        new_project = projects_by_pref[i][pref];
 
-        /* find the choice with the preference, and assign it */
-        for(j = 0; j < num_projects; j++)
-        {
-            if(choices[j][i] == pref)
-            {
-                projNum[i] = j;
-                projPref[i] = pref;
-            }
-        }
+        projNum[i] = new_project;
+        projPref[i] = pref;
     }
 
     /* Technically, we should fill this with true information, but we need
