@@ -429,15 +429,15 @@ void createInitialConfiguration(int choices[num_projects][num_groups], int projN
     for (i = 0; i < num_groups; i++)
     {
         double r = rand() / (double) RAND_MAX;
-        pref = randomNum(r, 4);
+        pref = randomNum(r, 4) + 1;
 
         /* find the choice with the preference, and assign it */
         for(j = 0; j < num_projects; j++)
         {
-            if(choices[j][i] == pref + 1)
+            if(choices[j][i] == pref)
             {
                 projNum[i] = j;
-                projPref[i] = pref + 1;
+                projPref[i] = pref;
             }
         }
     }
